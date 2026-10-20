@@ -4,7 +4,8 @@
 
 Implementados localmente el traslado a `iobjetivos`, los roles propios vinculados al Hub,
 la UI corporativa y la protección del trabajo. **Traslado remoto validado mediante los
-resultados SQL aportados por el usuario; despliegue de la nueva aplicación pendiente.**
+resultados SQL aportados por el usuario. La versión base `8670cdb` está desplegada;
+el ajuste posterior de integración visual está pendiente de publicación.**
 
 ## Implementado
 
@@ -31,16 +32,28 @@ resultados SQL aportados por el usuario; despliegue de la nueva aplicación pend
 - Sin USAGE/SELECT/INSERT/UPDATE/DELETE efectivos para anon/authenticated en el catálogo.
 - Alta manual de un administrador local, vinculado a un usuario activo del Hub, validada por SQL.
 - El usuario confirma exposición de `iobjetivos` en Data API y variables de producción configuradas.
-- Comprobación HTTP anónima de `https://gestionatools-informe-objetivos.vercel.app/`:
-  tanto `/` como `/api/session` responden 307 hacia el Hub, comportamiento de la versión anterior.
+- Despliegue de `8670cdb` completado por Vercel. Comprobación HTTP pública: `/` devuelve
+  307 hacia el SSO, `/api/session` devuelve 401 sin sesión y POST `/logout` devuelve 303
+  al inicio del Hub, borrando la cookie local.
+- El primer acceso autenticado detectó ausencia de `SUPABASE_SERVICE_ROLE_KEY` en Vercel.
+  El usuario identificó la variable pendiente; no se ha certificado desde aquí el acceso
+  autenticado a datos tras su configuración.
+
+## Ajuste de integración visual
+
+- Variables de fuentes en `html` y sans en `body`, alineadas con Hub y Migraciones.
+- Eliminados los fondos, alturas, márgenes y límites de ancho duplicados de ambas pantallas.
+- Tipografía y radios heredados del paquete corporativo; títulos y espaciados unificados.
+- Desplazamiento de columnas contenido dentro de los listados en pantallas pequeñas.
+- Prueba Chromium ampliada con fuente realmente renderizada, alineación y ausencia de
+  desbordamiento, con capturas de generador/admin en escritorio/móvil y claro/oscuro.
 
 ## Pendiente para completar el rollout
 
-Publicar los cambios y desplegar la nueva aplicación según `docs/schema-rollout.md`.
-Verificar `/api/session` sin sesión (401), configuración real de PostgREST y entrada
-SSO, lecturas, CRUD, PDF, borradores y logout con usuarios reales. La configuración
-de variables y exposición está confirmada por el usuario, todavía sin validación
-del runtime de la nueva versión en producción.
+Publicar y desplegar el ajuste visual después de su revisión local, según el proceso
+acordado. Completar la revisión autenticada de la configuración PostgREST, entrada SSO,
+lecturas, CRUD, PDF, borradores y logout con usuarios reales. Los checks HTTP anónimos
+ya están verificados; no acreditan por sí solos el acceso a datos mediante sesión real.
 
 ## Decisiones
 

@@ -53,7 +53,7 @@ export function LocalDraft<T>({ kind, value, dirty, schema, onRestore }: {
     return () => clearTimeout(timer)
   }, [snapshot, dirty])
 
-  return <section data-draft-dirty={dirty} className="space-y-2 text-sm" aria-label="Borradores locales">
+  return <section hidden={!storageError && available.length === 0} data-draft-dirty={dirty} className="space-y-2 text-sm" aria-label="Borradores locales">
     {storageError && <p role="alert" className="text-destructive">No se puede guardar el borrador en este navegador. Mantén la pestaña abierta y exporta un JSON o copia los cambios antes de salir.</p>}
     {available.map(draft => <div key={draft.key} className="hub-card flex flex-wrap items-center gap-3 p-3">
       <span>Borrador local · {new Date(draft.modifiedAt).toLocaleString()}</span>

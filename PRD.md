@@ -100,6 +100,13 @@ Notas:
 - **Feedback:** `Toaster` para confirmar guardado de ítems o generación de PDF.
 - **Data Display:** `Table` component para el Admin Dashboard. `Card` o `Checkbox` list para la selección de ítems.
 - **Icons:** Lucide React para acciones (Download, Edit, Trash, Plus).
+- **Integración corporativa:** el shell proporciona fondo, altura y márgenes generales.
+  Generador y administración comparten una estructura de contenido sin otra capa de página,
+  con separación de 24 px, títulos de 24 px y descripciones de 14 px.
+- **Tipografía:** Geist para la interfaz y Geist Mono para contenido monoespaciado,
+  cargadas por Next Font y con las variables disponibles desde `html`, como en el Hub.
+- **Listados adaptables:** las columnas conservan su distribución y se desplazan dentro
+  del listado cuando no caben, sin producir desplazamiento horizontal de toda la página.
 
 ## 7. Sesión y recuperación del trabajo
 

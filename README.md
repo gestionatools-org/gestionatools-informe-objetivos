@@ -32,6 +32,20 @@ almacenamiento bloqueado. Requiere las bibliotecas de Chromium en el host (Playw
 ofrece `corepack pnpm exec playwright install-deps chromium`) y el navegador instalado.
 `IOBJETIVOS_TEST_CHROMIUM` permite indicar un ejecutable Chromium existente.
 
+La prueba de navegador verifica que Chromium dibuja el título con la fuente Geist
+descargada, que los controles heredan la misma familia, que el contenido se alinea con
+el shell y que la página no se desborda horizontalmente en escritorio/móvil y claro/oscuro.
+Para guardar las ocho capturas de revisión en un directorio local:
+
+```bash
+IOBJETIVOS_SCREENSHOT_DIR=/tmp/iobjetivos-ui-review corepack pnpm test:browser
+```
+
+El shell aporta el fondo y los márgenes generales; ambas pantallas usan los tokens del
+paquete corporativo sin sobrescribir sus radios o familias. Next Font sirve Geist y
+Geist Mono desde la aplicación y declara sus variables en `html`. El ajuste no cambia
+las fuentes del PDF.
+
 ## Variables de entorno
 
 Crea `.env.local` con estos nombres (valores de ejemplo, nunca credenciales versionadas):

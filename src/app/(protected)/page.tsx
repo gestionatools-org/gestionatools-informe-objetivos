@@ -185,7 +185,7 @@ const MultiSelectFilter = ({
   }, [open])
 
   return (
-    <div ref={containerRef} className="relative z-20 space-y-2">
+    <div ref={containerRef} className="relative z-20 min-w-0 space-y-2">
       <p className="text-sm font-medium text-muted-foreground">{title}</p>
       <div className="flex items-center gap-2">
         <div className="relative">
@@ -201,7 +201,7 @@ const MultiSelectFilter = ({
             <ChevronDown className="size-4 text-muted-foreground" />
           </button>
           {open && !disabled && (
-            <div className="absolute left-0 z-50 mt-2 w-72 rounded-md border border-border bg-background p-2 shadow-lg">
+            <div className="absolute left-0 z-50 mt-2 w-60 sm:w-72 rounded-md border border-border bg-background p-2 shadow-lg">
             {options.length === 0 ? (
               <div className="px-2 py-3 text-xs text-muted-foreground">
                 No hay opciones disponibles.
@@ -642,505 +642,503 @@ export default function Home() {
   )
 
   return (
-    <div className="min-h-full bg-background text-foreground">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-6 py-12">
-        <LocalDraft kind="report" schema={reportDraftSchema} value={reportDraft}
-          dirty={Boolean(reportDraft.metadata.entity || reportDraft.metadata.manager || selectedRows.length)}
-          onRestore={(draft) => {
-            form.reset(draft.metadata)
-            setSelectedItems(Object.fromEntries(draft.items.map(row => [row.item.id, row])))
-            setAvailableChecked(new Set())
-            setSelectedChecked(new Set())
-            toast.success("Borrador recuperado. Revisa los ítems antes de exportar.")
-          }} />
-        <header className="flex flex-col gap-4">
-          <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">
-            Generador de informes de objetivos
-          </h1>
-          <p className="max-w-2xl text-base text-muted-foreground md:text-lg">
-            Selecciona los items que quieres incluir y completa los datos de
-            cabecera para generar el PDF.
-          </p>
+    <section aria-label="Generador de informes" className="flex min-w-0 flex-col gap-6">
+      <LocalDraft kind="report" schema={reportDraftSchema} value={reportDraft}
+        dirty={Boolean(reportDraft.metadata.entity || reportDraft.metadata.manager || selectedRows.length)}
+        onRestore={(draft) => {
+          form.reset(draft.metadata)
+          setSelectedItems(Object.fromEntries(draft.items.map(row => [row.item.id, row])))
+          setAvailableChecked(new Set())
+          setSelectedChecked(new Set())
+          toast.success("Borrador recuperado. Revisa los ítems antes de exportar.")
+        }} />
+      <header className="flex flex-col gap-2">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Generador de informes de objetivos
+        </h1>
+        <p className="max-w-2xl text-sm text-muted-foreground">
+          Selecciona los items que quieres incluir y completa los datos de
+          cabecera para generar el PDF.
+        </p>
 
-        </header>
+      </header>
 
-        <div className="grid gap-8">
-          <Card className="border-border bg-card shadow-sm backdrop-blur">
+      <div className="grid min-w-0 grid-cols-1 gap-6">
+        <Card className="border-border bg-card shadow-sm">
+          <CardHeader className="space-y-2">
+            <CardTitle>Datos de cabecera</CardTitle>
+            <CardDescription>Informacion general para el PDF.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <form className="space-y-5" onSubmit={onSubmit}>
+              <div className="space-y-2">
+                <Label htmlFor="entity">Entidad</Label>
+                <Input
+                  id="entity"
+                  placeholder="Entidad ejecutora"
+                  {...form.register("entity")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="manager">Gestor/a</Label>
+                <Input
+                  id="manager"
+                  placeholder="Responsable"
+                  {...form.register("manager")}
+                />
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        <div className="min-w-0 space-y-6">
+          <Card className="relative z-10 border-border bg-card shadow-sm">
             <CardHeader className="space-y-2">
-              <CardTitle>Datos de cabecera</CardTitle>
-              <CardDescription>Informacion general para el PDF.</CardDescription>
+              <CardTitle>Items disponibles</CardTitle>
+              <CardDescription>
+                {itemsLoading
+                  ? "Cargando catalogo..."
+                  : `${filteredAvailableItems.length} disponibles`}
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <form className="space-y-5" onSubmit={onSubmit}>
-                <div className="space-y-2">
-                  <Label htmlFor="entity">Entidad</Label>
-                  <Input
-                    id="entity"
-                    placeholder="Entidad ejecutora"
-                    {...form.register("entity")}
+            <CardContent className="space-y-4">
+              {itemsError && (
+                <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  Error al cargar items: {itemsError.message}
+                </div>
+              )}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="flex flex-wrap items-end gap-2">
+                  <MultiSelectFilter
+                    title="Filtrar items disponibles por instruccion"
+                    options={instructionOptions}
+                    value={availableInstructionFilters}
+                    onChange={setAvailableInstructionFilters}
+                    placeholder="Todas las instrucciones"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="manager">Gestor/a</Label>
-                  <Input
-                    id="manager"
-                    placeholder="Responsable"
-                    {...form.register("manager")}
-                  />
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-
-          <div className="space-y-6">
-            <Card className="relative z-10 border-border bg-card shadow-sm backdrop-blur">
-              <CardHeader className="space-y-2">
-                <CardTitle>Items disponibles</CardTitle>
-                <CardDescription>
-                  {itemsLoading
-                    ? "Cargando catalogo..."
-                    : `${filteredAvailableItems.length} disponibles`}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {itemsError && (
-                  <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                    Error al cargar items: {itemsError.message}
-                  </div>
-                )}
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="flex flex-wrap items-end gap-2">
-                    <MultiSelectFilter
-                      title="Filtrar items disponibles por instruccion"
-                      options={instructionOptions}
-                      value={availableInstructionFilters}
-                      onChange={setAvailableInstructionFilters}
-                      placeholder="Todas las instrucciones"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setAvailableInstructionFilters([])}
-                      disabled={availableInstructionFilters.length === 0}
-                    >
-                      Eliminar filtros
-                    </Button>
-                  </div>
-                  <div className="flex flex-wrap items-end gap-2">
-                    <MultiSelectFilter
-                      title="Filtrar items disponibles por linea de trabajo"
-                      options={availableWorkLineOptions}
-                      value={effectiveAvailableWorkLineFilters}
-                      onChange={setAvailableWorkLineFilters}
-                      placeholder="Todas las lineas"
-                      disabled={availableInstructionFilters.length === 0}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setAvailableWorkLineFilters([])}
-                      disabled={
-                        effectiveAvailableWorkLineFilters.length === 0 ||
-                        availableInstructionFilters.length === 0
-                      }
-                    >
-                      Eliminar filtros
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    type="button"
-                    onClick={handleAddSelected}
-                    disabled={availableChecked.size === 0}
-                  >
-                    Añadir seleccionados
-                  </Button>
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={handleAddAllAvailable}
-                    disabled={availableItems.length === 0}
+                    size="sm"
+                    onClick={() => setAvailableInstructionFilters([])}
+                    disabled={availableInstructionFilters.length === 0}
                   >
-                    Añadir todos
+                    Eliminar filtros
                   </Button>
+                </div>
+                <div className="flex flex-wrap items-end gap-2">
+                  <MultiSelectFilter
+                    title="Filtrar items disponibles por linea de trabajo"
+                    options={availableWorkLineOptions}
+                    value={effectiveAvailableWorkLineFilters}
+                    onChange={setAvailableWorkLineFilters}
+                    placeholder="Todas las lineas"
+                    disabled={availableInstructionFilters.length === 0}
+                  />
                   <Button
                     type="button"
-                    variant="ghost"
-                    onClick={handleRestoreAll}
-                    disabled={selectedRows.length === 0}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setAvailableWorkLineFilters([])}
+                    disabled={
+                      effectiveAvailableWorkLineFilters.length === 0 ||
+                      availableInstructionFilters.length === 0
+                    }
                   >
-                    Restaurar todo
+                    Eliminar filtros
                   </Button>
-                  <Badge variant="outline">
-                    {availableChecked.size} seleccionados
-                  </Badge>
                 </div>
-                {filteredAvailableItems.length === 0 ? (
-                  <div className="rounded-lg border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
-                    {availableItems.length === 0
-                      ? "No hay items disponibles. Todo el catalogo esta incluido."
-                      : "No hay items disponibles que coincidan con los filtros."}
-                  </div>
-                ) : (
-                  <Accordion type="multiple" className="space-y-3">
-                    {groupedAvailableItems.map(([instruction, items], index) => (
-                      <AccordionItem
-                        key={`${instruction}-${index}`}
-                        value={`available-${index}`}
-                        className="rounded-lg border border-border bg-card"
-                      >
-                        <AccordionTrigger className="px-3 py-2 text-sm font-semibold text-foreground hover:no-underline">
-                          <span className="flex w-full items-center justify-between pr-3">
-                            <span>{instruction}</span>
-                            <Badge variant="outline">{items.length}</Badge>
-                          </span>
-                        </AccordionTrigger>
-                        <AccordionContent className="px-3 pb-3">
-                          <div className="rounded-lg border border-border">
-                            <div className="grid grid-cols-[auto_1.3fr_1fr_1.4fr_0.7fr_auto] gap-3 border-b border-border bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground">
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  onClick={handleAddSelected}
+                  disabled={availableChecked.size === 0}
+                >
+                  Añadir seleccionados
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAddAllAvailable}
+                  disabled={availableItems.length === 0}
+                >
+                  Añadir todos
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleRestoreAll}
+                  disabled={selectedRows.length === 0}
+                >
+                  Restaurar todo
+                </Button>
+                <Badge variant="outline">
+                  {availableChecked.size} seleccionados
+                </Badge>
+              </div>
+              {filteredAvailableItems.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
+                  {availableItems.length === 0
+                    ? "No hay items disponibles. Todo el catalogo esta incluido."
+                    : "No hay items disponibles que coincidan con los filtros."}
+                </div>
+              ) : (
+                <Accordion type="multiple" className="space-y-3">
+                  {groupedAvailableItems.map(([instruction, items], index) => (
+                    <AccordionItem
+                      key={`${instruction}-${index}`}
+                      value={`available-${index}`}
+                      className="rounded-lg border border-border bg-card"
+                    >
+                      <AccordionTrigger className="px-3 py-2 text-sm font-semibold text-foreground hover:no-underline">
+                        <span className="flex w-full items-center justify-between pr-3">
+                          <span>{instruction}</span>
+                          <Badge variant="outline">{items.length}</Badge>
+                        </span>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-3 pb-3">
+                        <div className="min-w-0 overflow-x-auto rounded-lg border border-border">
+                          <div className="grid min-w-[48rem] grid-cols-[auto_1.3fr_1fr_1.4fr_0.7fr_auto] gap-3 border-b border-border bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground">
+                            <Checkbox
+                              checked={
+                                items.length === 0
+                                  ? false
+                                  : items.every((item) => availableChecked.has(item.id))
+                                    ? true
+                                    : items.some((item) => availableChecked.has(item.id))
+                                      ? "indeterminate"
+                                      : false
+                              }
+                              onCheckedChange={(checked) => {
+                                const shouldCheck = checked === true
+                                setAvailableChecked((prev) => {
+                                  const next = new Set(prev)
+                                  items.forEach((item) => {
+                                    if (shouldCheck) {
+                                      next.add(item.id)
+                                    } else {
+                                      next.delete(item.id)
+                                    }
+                                  })
+                                  return next
+                                })
+                              }}
+                              aria-label="Seleccionar todos los items visibles"
+                              disabled={items.length === 0}
+                            />
+                            <span>Instruccion</span>
+                            <span>Linea de trabajo</span>
+                            <span>Objetivo de evaluacion</span>
+                            <span>ID Objetivo</span>
+                            <span>Accion</span>
+                          </div>
+                          {items.map((item) => (
+                            <div
+                              key={item.id}
+                              className="grid min-w-[48rem] grid-cols-[auto_1.3fr_1fr_1.4fr_0.7fr_auto] items-center gap-3 border-b border-border px-3 py-2 text-sm last:border-b-0"
+                            >
                               <Checkbox
-                                checked={
-                                  items.length === 0
-                                    ? false
-                                    : items.every((item) => availableChecked.has(item.id))
-                                      ? true
-                                      : items.some((item) => availableChecked.has(item.id))
-                                        ? "indeterminate"
-                                        : false
-                                }
+                                checked={availableChecked.has(item.id)}
                                 onCheckedChange={(checked) => {
-                                  const shouldCheck = checked === true
+                                  const isChecked = checked === true
                                   setAvailableChecked((prev) => {
                                     const next = new Set(prev)
-                                    items.forEach((item) => {
-                                      if (shouldCheck) {
-                                        next.add(item.id)
-                                      } else {
-                                        next.delete(item.id)
-                                      }
-                                    })
+                                    if (isChecked) {
+                                      next.add(item.id)
+                                    } else {
+                                      next.delete(item.id)
+                                    }
                                     return next
                                   })
                                 }}
-                                aria-label="Seleccionar todos los items visibles"
-                                disabled={items.length === 0}
+                                aria-label={`Seleccionar ${item.item_objective ?? "item"}`}
                               />
-                              <span>Instruccion</span>
-                              <span>Linea de trabajo</span>
-                              <span>Objetivo de evaluacion</span>
-                              <span>ID Objetivo</span>
-                              <span>Accion</span>
-                            </div>
-                            {items.map((item) => (
-                              <div
-                                key={item.id}
-                                className="grid grid-cols-[auto_1.3fr_1fr_1.4fr_0.7fr_auto] items-center gap-3 border-b border-border px-3 py-2 text-sm last:border-b-0"
+                              <div>
+                                <div className="font-medium text-foreground">
+                                  {item.instruction}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {item.matter} · {item.submatter}
+                                </div>
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {item.work_line ?? "Sin linea"}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {item.item_objective ?? "Sin objetivo"}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {item.item_id ?? "Sin ID"}
+                              </div>
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => handleAddItem(item)}
                               >
-                                <Checkbox
-                                  checked={availableChecked.has(item.id)}
-                                  onCheckedChange={(checked) => {
-                                    const isChecked = checked === true
-                                    setAvailableChecked((prev) => {
-                                      const next = new Set(prev)
-                                      if (isChecked) {
-                                        next.add(item.id)
-                                      } else {
-                                        next.delete(item.id)
-                                      }
-                                      return next
-                                    })
-                                  }}
-                                  aria-label={`Seleccionar ${item.item_objective ?? "item"}`}
-                                />
-                                <div>
-                                  <div className="font-medium text-foreground">
-                                    {item.instruction}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {item.matter} · {item.submatter}
-                                  </div>
+                                Añadir
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-border bg-card shadow-sm">
+            <CardHeader className="space-y-2">
+              <CardTitle>Items del informe</CardTitle>
+              <CardDescription>
+                {itemsLoading
+                  ? "Cargando catalogo..."
+                  : `${filteredSelectedRows.length} de ${selectedRows.length} items seleccionados`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="flex flex-wrap items-end gap-2">
+                  <MultiSelectFilter
+                    title="Filtrar items del informe por instruccion"
+                    options={instructionOptions}
+                    value={selectedInstructionFilters}
+                    onChange={setSelectedInstructionFilters}
+                    placeholder="Todas las instrucciones"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedInstructionFilters([])}
+                    disabled={selectedInstructionFilters.length === 0}
+                  >
+                    Eliminar filtros
+                  </Button>
+                </div>
+                <div className="flex flex-wrap items-end gap-2">
+                  <MultiSelectFilter
+                    title="Filtrar items del informe por linea de trabajo"
+                    options={selectedWorkLineOptions}
+                    value={effectiveSelectedWorkLineFilters}
+                    onChange={setSelectedWorkLineFilters}
+                    placeholder="Todas las lineas"
+                    disabled={selectedInstructionFilters.length === 0}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedWorkLineFilters([])}
+                    disabled={
+                      effectiveSelectedWorkLineFilters.length === 0 ||
+                      selectedInstructionFilters.length === 0
+                    }
+                  >
+                    Eliminar filtros
+                  </Button>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleRemoveSelected}
+                  disabled={selectedChecked.size === 0}
+                >
+                  Quitar seleccionados
+                </Button>
+                <Button type="button" variant="ghost" onClick={handleClearSelection}>
+                  Quitar todos
+                </Button>
+                <Badge variant="outline">{selectedRows.length} seleccionados</Badge>
+              </div>
+              {filteredSelectedRows.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
+                  {selectedRows.length === 0
+                    ? "No hay items en el informe."
+                    : "No hay items que coincidan con los filtros."}
+                </div>
+              ) : (
+                <Accordion type="multiple" className="space-y-3">
+                  {groupedSelectedRows.map(([instruction, rows], index) => (
+                    <AccordionItem
+                      key={`${instruction}-${index}`}
+                      value={`selected-${index}`}
+                      className="rounded-lg border border-border bg-card"
+                    >
+                      <AccordionTrigger className="px-3 py-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground hover:no-underline">
+                        <span className="flex w-full items-center justify-between pr-3">
+                          <span>{instruction}</span>
+                          <Badge variant="outline">{rows.length}</Badge>
+                        </span>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-3 pb-3">
+                        <div className="min-w-0 overflow-x-auto rounded-lg border border-border">
+                          <div className="grid min-w-[44rem] grid-cols-[auto_1.6fr_1.1fr_1.4fr_auto] gap-3 border-b border-border bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground">
+                            <Checkbox
+                              checked={
+                                rows.length === 0
+                                  ? false
+                                  : rows.every((row) => selectedChecked.has(row.item.id))
+                                    ? true
+                                    : rows.some((row) => selectedChecked.has(row.item.id))
+                                      ? "indeterminate"
+                                      : false
+                              }
+                              onCheckedChange={(checked) => {
+                                const shouldCheck = checked === true
+                                setSelectedChecked((prev) => {
+                                  const next = new Set(prev)
+                                  rows.forEach((row) => {
+                                    if (shouldCheck) {
+                                      next.add(row.item.id)
+                                    } else {
+                                      next.delete(row.item.id)
+                                    }
+                                  })
+                                  return next
+                                })
+                              }}
+                              aria-label="Seleccionar todos los items visibles"
+                              disabled={rows.length === 0}
+                            />
+                            <span>Item</span>
+                            <span>Plazo</span>
+                            <span>Observaciones</span>
+                            <span>Accion</span>
+                          </div>
+                          {rows.map(({ item, deadline, observations }) => (
+                            <div
+                              key={item.id}
+                              className="grid min-w-[44rem] grid-cols-[auto_1.6fr_1.1fr_1.4fr_auto] items-center gap-3 border-b border-border px-3 py-2 text-sm last:border-b-0"
+                            >
+                              <Checkbox
+                                checked={selectedChecked.has(item.id)}
+                                onCheckedChange={(checked) => {
+                                  const isChecked = checked === true
+                                  setSelectedChecked((prev) => {
+                                    const next = new Set(prev)
+                                    if (isChecked) {
+                                      next.add(item.id)
+                                    } else {
+                                      next.delete(item.id)
+                                    }
+                                    return next
+                                  })
+                                }}
+                                aria-label={`Seleccionar ${item.item_objective ?? "item"}`}
+                              />
+                              <div>
+                                <div className="font-medium text-foreground">
+                                  {item.item_objective ?? "Sin objetivo"}
                                 </div>
                                 <div className="text-xs text-muted-foreground">
                                   {item.work_line ?? "Sin linea"}
                                 </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {item.item_objective ?? "Sin objetivo"}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {item.item_id ?? "Sin ID"}
-                                </div>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  onClick={() => handleAddItem(item)}
-                                >
-                                  Añadir
-                                </Button>
                               </div>
-                            ))}
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="border-border bg-card shadow-sm backdrop-blur">
-              <CardHeader className="space-y-2">
-                <CardTitle>Items del informe</CardTitle>
-                <CardDescription>
-                  {itemsLoading
-                    ? "Cargando catalogo..."
-                    : `${filteredSelectedRows.length} de ${selectedRows.length} items seleccionados`}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="flex flex-wrap items-end gap-2">
-                    <MultiSelectFilter
-                      title="Filtrar items del informe por instruccion"
-                      options={instructionOptions}
-                      value={selectedInstructionFilters}
-                      onChange={setSelectedInstructionFilters}
-                      placeholder="Todas las instrucciones"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedInstructionFilters([])}
-                      disabled={selectedInstructionFilters.length === 0}
-                    >
-                      Eliminar filtros
-                    </Button>
-                  </div>
-                  <div className="flex flex-wrap items-end gap-2">
-                    <MultiSelectFilter
-                      title="Filtrar items del informe por linea de trabajo"
-                      options={selectedWorkLineOptions}
-                      value={effectiveSelectedWorkLineFilters}
-                      onChange={setSelectedWorkLineFilters}
-                      placeholder="Todas las lineas"
-                      disabled={selectedInstructionFilters.length === 0}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedWorkLineFilters([])}
-                      disabled={
-                        effectiveSelectedWorkLineFilters.length === 0 ||
-                        selectedInstructionFilters.length === 0
-                      }
-                    >
-                      Eliminar filtros
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleRemoveSelected}
-                    disabled={selectedChecked.size === 0}
-                  >
-                    Quitar seleccionados
-                  </Button>
-                  <Button type="button" variant="ghost" onClick={handleClearSelection}>
-                    Quitar todos
-                  </Button>
-                  <Badge variant="outline">{selectedRows.length} seleccionados</Badge>
-                </div>
-                {filteredSelectedRows.length === 0 ? (
-                  <div className="rounded-lg border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
-                    {selectedRows.length === 0
-                      ? "No hay items en el informe."
-                      : "No hay items que coincidan con los filtros."}
-                  </div>
-                ) : (
-                  <Accordion type="multiple" className="space-y-3">
-                    {groupedSelectedRows.map(([instruction, rows], index) => (
-                      <AccordionItem
-                        key={`${instruction}-${index}`}
-                        value={`selected-${index}`}
-                        className="rounded-lg border border-border bg-card"
-                      >
-                        <AccordionTrigger className="px-3 py-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground hover:no-underline">
-                          <span className="flex w-full items-center justify-between pr-3">
-                            <span>{instruction}</span>
-                            <Badge variant="outline">{rows.length}</Badge>
-                          </span>
-                        </AccordionTrigger>
-                        <AccordionContent className="px-3 pb-3">
-                          <div className="rounded-lg border border-border">
-                            <div className="grid grid-cols-[auto_1.6fr_1.1fr_1.4fr_auto] gap-3 border-b border-border bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground">
-                              <Checkbox
-                                checked={
-                                  rows.length === 0
-                                    ? false
-                                    : rows.every((row) => selectedChecked.has(row.item.id))
-                                      ? true
-                                      : rows.some((row) => selectedChecked.has(row.item.id))
-                                        ? "indeterminate"
-                                        : false
+                              <Select
+                                value={deadline}
+                                onValueChange={(value) =>
+                                  setSelectedItems((prev) => ({
+                                    ...prev,
+                                    [item.id]: {
+                                      ...prev[item.id],
+                                      deadline: value,
+                                    },
+                                  }))
                                 }
-                                onCheckedChange={(checked) => {
-                                  const shouldCheck = checked === true
-                                  setSelectedChecked((prev) => {
-                                    const next = new Set(prev)
-                                    rows.forEach((row) => {
-                                      if (shouldCheck) {
-                                        next.add(row.item.id)
-                                      } else {
-                                        next.delete(row.item.id)
-                                      }
-                                    })
-                                    return next
-                                  })
-                                }}
-                                aria-label="Seleccionar todos los items visibles"
-                                disabled={rows.length === 0}
-                              />
-                              <span>Item</span>
-                              <span>Plazo</span>
-                              <span>Observaciones</span>
-                              <span>Accion</span>
-                            </div>
-                            {rows.map(({ item, deadline, observations }) => (
-                              <div
-                                key={item.id}
-                                className="grid grid-cols-[auto_1.6fr_1.1fr_1.4fr_auto] items-center gap-3 border-b border-border px-3 py-2 text-sm last:border-b-0"
                               >
-                                <Checkbox
-                                  checked={selectedChecked.has(item.id)}
-                                  onCheckedChange={(checked) => {
-                                    const isChecked = checked === true
-                                    setSelectedChecked((prev) => {
-                                      const next = new Set(prev)
-                                      if (isChecked) {
-                                        next.add(item.id)
-                                      } else {
-                                        next.delete(item.id)
-                                      }
-                                      return next
-                                    })
-                                  }}
-                                  aria-label={`Seleccionar ${item.item_objective ?? "item"}`}
-                                />
-                                <div>
-                                  <div className="font-medium text-foreground">
-                                    {item.item_objective ?? "Sin objetivo"}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {item.work_line ?? "Sin linea"}
-                                  </div>
-                                </div>
-                                <Select
-                                  value={deadline}
-                                  onValueChange={(value) =>
-                                    setSelectedItems((prev) => ({
-                                      ...prev,
-                                      [item.id]: {
-                                        ...prev[item.id],
-                                        deadline: value,
-                                      },
-                                    }))
-                                  }
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Plazo" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {deadlineOptions.map((option) => (
-                                      <SelectItem key={option} value={option}>
-                                        {option}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <Input
-                                  value={observations}
-                                  onChange={(event) =>
-                                    setSelectedItems((prev) => ({
-                                      ...prev,
-                                      [item.id]: {
-                                        ...prev[item.id],
-                                        observations: event.target.value,
-                                      },
-                                    }))
-                                  }
-                                  placeholder="Observaciones"
-                                />
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleRemoveItem(item.id)}
-                                >
-                                  Quitar
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Plazo" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {deadlineOptions.map((option) => (
+                                    <SelectItem key={option} value={option}>
+                                      {option}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Input
+                                value={observations}
+                                onChange={(event) =>
+                                  setSelectedItems((prev) => ({
+                                    ...prev,
+                                    [item.id]: {
+                                      ...prev[item.id],
+                                      observations: event.target.value,
+                                    },
+                                  }))
+                                }
+                                placeholder="Observaciones"
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleRemoveItem(item.id)}
+                              >
+                                Quitar
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              )}
+            </CardContent>
+          </Card>
         </div>
-
-        <Card className="border-border bg-primary/5 text-foreground shadow-lg">
-          <CardContent className="flex flex-col items-center justify-center gap-3 py-6 md:flex-row">
-            <Button
-              type="button"
-              className="gap-2"
-              onClick={onSubmit}
-            >
-              <Download className="size-4" />
-              Exportar PDF
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="gap-2"
-              onClick={handleExportDraft}
-            >
-              Guardar borrador
-            </Button>
-            <input
-              ref={draftInputRef}
-              type="file"
-              accept="application/json"
-              className="hidden"
-              onChange={(event) => {
-                const file = event.target.files?.[0]
-                if (file) {
-                  handleImportDraft(file)
-                }
-                if (draftInputRef.current) {
-                  draftInputRef.current.value = ""
-                }
-              }}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              className="gap-2"
-              onClick={() => draftInputRef.current?.click()}
-            >
-              Importar borrador
-            </Button>
-          </CardContent>
-        </Card>
       </div>
-    </div>
+
+      <Card className="border-border bg-primary/5 text-foreground shadow-lg">
+        <CardContent className="flex flex-col items-center justify-center gap-3 py-6 md:flex-row">
+          <Button
+            type="button"
+            className="gap-2"
+            onClick={onSubmit}
+          >
+            <Download className="size-4" />
+            Exportar PDF
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2"
+            onClick={handleExportDraft}
+          >
+            Guardar borrador
+          </Button>
+          <input
+            ref={draftInputRef}
+            type="file"
+            accept="application/json"
+            className="hidden"
+            onChange={(event) => {
+              const file = event.target.files?.[0]
+              if (file) {
+                handleImportDraft(file)
+              }
+              if (draftInputRef.current) {
+                draftInputRef.current.value = ""
+              }
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2"
+            onClick={() => draftInputRef.current?.click()}
+          >
+            Importar borrador
+          </Button>
+        </CardContent>
+      </Card>
+    </section>
   )
 }

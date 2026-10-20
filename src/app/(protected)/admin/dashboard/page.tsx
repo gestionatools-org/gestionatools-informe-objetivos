@@ -307,251 +307,249 @@ export default function AdminDashboardPage() {
   }, [items])
 
   return (
-    <div className="min-h-screen bg-background px-6 py-12">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <Badge className="mb-2">Admin</Badge>
-            <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-            <p className="text-sm text-muted-foreground">
-              Gestiona el catalogo de configuracion.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="outline" onClick={() => handleNew()}>
-              Nuevo item
-            </Button>
-          </div>
-        </header>
+    <section aria-label="Administración del catálogo" className="flex min-w-0 flex-col gap-6">
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <Badge className="mb-2">Admin</Badge>
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">
+            Gestiona el catalogo de configuracion.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" onClick={() => handleNew()}>
+            Nuevo item
+          </Button>
+        </div>
+      </header>
 
-        <LocalDraft kind="catalog-item" schema={adminDraftSchema} value={adminDraft}
-          dirty={form.formState.isDirty}
-          onRestore={(draft) => {
-            setEditingId(draft.editingId)
-            form.reset(draft.values, { keepDefaultValues: true })
-            toast.success("Edición recuperada. Revisa los datos antes de guardar.")
-          }} />
-        <Card>
-          <CardHeader>
-            <CardTitle>{isEditing ? "Editar item" : "Nuevo item"}</CardTitle>
-            <CardDescription>
-              Completa los campos y guarda el item.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form className="grid gap-4 md:grid-cols-2" onSubmit={onSubmit}>
-              <div className="space-y-2">
-                <Label>Comision</Label>
-                <Select
-                  value={selectedCommissionId}
-                  onValueChange={(value) => {
-                    setInstructions([])
-                    setMatters([])
-                    setSubmatters([])
-                    form.setValue("commission_id", value, { shouldDirty: true })
-                    form.setValue("instruction_id", "")
-                    form.setValue("matter_id", "")
-                    form.setValue("submatter_id", "")
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {commissions.map((commission) => (
-                      <SelectItem key={commission.id} value={commission.id}>
-                        {commission.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Instruccion</Label>
-                <Select
-                  value={selectedInstructionId}
-                  onValueChange={(value) => {
-                    setMatters([])
-                    setSubmatters([])
-                    form.setValue("instruction_id", value, { shouldDirty: true })
-                    form.setValue("matter_id", "")
-                    form.setValue("submatter_id", "")
-                  }}
-                  disabled={!selectedCommissionId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {instructions.map((instruction) => (
-                      <SelectItem key={instruction.id} value={instruction.id}>
-                        {instruction.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Materia</Label>
-                <Select
-                  value={selectedMatterId}
-                  onValueChange={(value) => {
-                    form.setValue("matter_id", value, { shouldDirty: true })
-                    form.setValue("submatter_id", "")
-                  }}
-                  disabled={!selectedInstructionId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {matters.map((matter) => (
-                      <SelectItem key={matter.id} value={matter.id}>
-                        {matter.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Submateria</Label>
-                <Select
-                  value={selectedSubmatterId}
-                  onValueChange={(value) => form.setValue("submatter_id", value, { shouldDirty: true })}
-                  disabled={!selectedMatterId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {submatters.map((submatter) => (
-                      <SelectItem key={submatter.id} value={submatter.id}>
-                        {submatter.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Linea de trabajo</Label>
-                <Select
-                  value={selectedWorkLineId}
-                  onValueChange={(value) => form.setValue("work_line_id", value, { shouldDirty: true })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {workLines.map((workLine) => (
-                      <SelectItem key={workLine.id} value={workLine.id}>
-                        {workLine.display_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Codigo heredado</Label>
-                <Input {...form.register("legacy_item_code")} />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label>Objetivo</Label>
-                <Input {...form.register("title")} />
-              </div>
-              <div className="space-y-2">
-                <Label>Estado</Label>
-                <Input {...form.register("status")} />
-              </div>
-              <div className="space-y-2">
-                <Label>Año</Label>
-                <Input
-                  type="number"
-                  readOnly
-                  {...form.register("year", { valueAsNumber: true })}
-                />
-              </div>
-              <div className="md:col-span-2 flex flex-wrap gap-2">
-                <Button type="submit" disabled={saving}>
-                  {saving ? "Guardando..." : isEditing ? "Actualizar" : "Guardar"}
+      <LocalDraft kind="catalog-item" schema={adminDraftSchema} value={adminDraft}
+        dirty={form.formState.isDirty}
+        onRestore={(draft) => {
+          setEditingId(draft.editingId)
+          form.reset(draft.values, { keepDefaultValues: true })
+          toast.success("Edición recuperada. Revisa los datos antes de guardar.")
+        }} />
+      <Card>
+        <CardHeader>
+          <CardTitle>{isEditing ? "Editar item" : "Nuevo item"}</CardTitle>
+          <CardDescription>
+            Completa los campos y guarda el item.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form className="grid gap-4 md:grid-cols-2" onSubmit={onSubmit}>
+            <div className="space-y-2">
+              <Label>Comision</Label>
+              <Select
+                value={selectedCommissionId}
+                onValueChange={(value) => {
+                  setInstructions([])
+                  setMatters([])
+                  setSubmatters([])
+                  form.setValue("commission_id", value, { shouldDirty: true })
+                  form.setValue("instruction_id", "")
+                  form.setValue("matter_id", "")
+                  form.setValue("submatter_id", "")
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona" />
+                </SelectTrigger>
+                <SelectContent>
+                  {commissions.map((commission) => (
+                    <SelectItem key={commission.id} value={commission.id}>
+                      {commission.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Instruccion</Label>
+              <Select
+                value={selectedInstructionId}
+                onValueChange={(value) => {
+                  setMatters([])
+                  setSubmatters([])
+                  form.setValue("instruction_id", value, { shouldDirty: true })
+                  form.setValue("matter_id", "")
+                  form.setValue("submatter_id", "")
+                }}
+                disabled={!selectedCommissionId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona" />
+                </SelectTrigger>
+                <SelectContent>
+                  {instructions.map((instruction) => (
+                    <SelectItem key={instruction.id} value={instruction.id}>
+                      {instruction.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Materia</Label>
+              <Select
+                value={selectedMatterId}
+                onValueChange={(value) => {
+                  form.setValue("matter_id", value, { shouldDirty: true })
+                  form.setValue("submatter_id", "")
+                }}
+                disabled={!selectedInstructionId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona" />
+                </SelectTrigger>
+                <SelectContent>
+                  {matters.map((matter) => (
+                    <SelectItem key={matter.id} value={matter.id}>
+                      {matter.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Submateria</Label>
+              <Select
+                value={selectedSubmatterId}
+                onValueChange={(value) => form.setValue("submatter_id", value, { shouldDirty: true })}
+                disabled={!selectedMatterId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona" />
+                </SelectTrigger>
+                <SelectContent>
+                  {submatters.map((submatter) => (
+                    <SelectItem key={submatter.id} value={submatter.id}>
+                      {submatter.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Linea de trabajo</Label>
+              <Select
+                value={selectedWorkLineId}
+                onValueChange={(value) => form.setValue("work_line_id", value, { shouldDirty: true })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona" />
+                </SelectTrigger>
+                <SelectContent>
+                  {workLines.map((workLine) => (
+                    <SelectItem key={workLine.id} value={workLine.id}>
+                      {workLine.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Codigo heredado</Label>
+              <Input {...form.register("legacy_item_code")} />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label>Objetivo</Label>
+              <Input {...form.register("title")} />
+            </div>
+            <div className="space-y-2">
+              <Label>Estado</Label>
+              <Input {...form.register("status")} />
+            </div>
+            <div className="space-y-2">
+              <Label>Año</Label>
+              <Input
+                type="number"
+                readOnly
+                {...form.register("year", { valueAsNumber: true })}
+              />
+            </div>
+            <div className="md:col-span-2 flex flex-wrap gap-2">
+              <Button type="submit" disabled={saving}>
+                {saving ? "Guardando..." : isEditing ? "Actualizar" : "Guardar"}
+              </Button>
+              {isEditing && (
+                <Button type="button" variant="ghost" onClick={() => handleNew()}>
+                  Cancelar
                 </Button>
-                {isEditing && (
-                  <Button type="button" variant="ghost" onClick={() => handleNew()}>
-                    Cancelar
-                  </Button>
-                )}
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+              )}
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Items configurados</CardTitle>
-            <CardDescription>
-              {loading ? "Cargando items..." : `${sortedItems.length} items`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="rounded-md border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
-                Cargando items...
+      <Card>
+        <CardHeader>
+          <CardTitle>Items configurados</CardTitle>
+          <CardDescription>
+            {loading ? "Cargando items..." : `${sortedItems.length} items`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="rounded-md border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+              Cargando items...
+            </div>
+          ) : (
+            <div className="min-w-0 overflow-x-auto rounded-lg border border-border">
+              <div className="grid min-w-[48rem] grid-cols-[1.4fr_1fr_1.6fr_0.7fr_auto] gap-3 border-b border-border bg-background px-3 py-2 text-xs font-semibold text-muted-foreground">
+                <span>Instruccion</span>
+                <span>Linea</span>
+                <span>Objetivo</span>
+                <span>ID</span>
+                <span>Accion</span>
               </div>
-            ) : (
-              <div className="rounded-lg border border-border">
-                <div className="grid grid-cols-[1.4fr_1fr_1.6fr_0.7fr_auto] gap-3 border-b border-border bg-background px-3 py-2 text-xs font-semibold text-muted-foreground">
-                  <span>Instruccion</span>
-                  <span>Linea</span>
-                  <span>Objetivo</span>
-                  <span>ID</span>
-                  <span>Accion</span>
+              {sortedItems.map((item) => (
+                <div
+                  key={item.item_uuid}
+                  className="grid min-w-[48rem] grid-cols-[1.4fr_1fr_1.6fr_0.7fr_auto] items-center gap-3 border-b border-border px-3 py-2 text-sm last:border-b-0"
+                >
+                  <div className="text-xs text-foreground">
+                    {item.instruction ?? "Sin instruccion"}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {item.work_line ?? "Sin linea"}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {item.title ?? "Sin objetivo"}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {item.item_code ?? "Sin ID"}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEdit(item)}
+                    >
+                      Editar
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleDelete(item.item_uuid)}
+                    >
+                      Eliminar
+                    </Button>
+                  </div>
                 </div>
-                {sortedItems.map((item) => (
-                  <div
-                    key={item.item_uuid}
-                    className="grid grid-cols-[1.4fr_1fr_1.6fr_0.7fr_auto] items-center gap-3 border-b border-border px-3 py-2 text-sm last:border-b-0"
-                  >
-                    <div className="text-xs text-foreground">
-                      {item.instruction ?? "Sin instruccion"}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {item.work_line ?? "Sin linea"}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {item.title ?? "Sin objetivo"}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {item.item_code ?? "Sin ID"}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEdit(item)}
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDelete(item.item_uuid)}
-                      >
-                        Eliminar
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-                {!loading && sortedItems.length === 0 && (
-                  <div className="px-4 py-6 text-sm text-muted-foreground">
-                    No hay items cargados.
-                  </div>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+              ))}
+              {!loading && sortedItems.length === 0 && (
+                <div className="px-4 py-6 text-sm text-muted-foreground">
+                  No hay items cargados.
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </section>
   )
 }

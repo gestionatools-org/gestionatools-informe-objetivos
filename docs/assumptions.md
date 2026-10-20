@@ -24,3 +24,14 @@
 - Conservar JSON manual versión 1 y snapshots de ítems; no sustituir silenciosamente textos por cambios del catálogo.
 - PDF completamente cliente, agrupación/orden y plazos por ítem conservados. Año fijo 2026.
 - Identidad visual mediante `@gestionatools-org/ui@0.1.0`, sin modificar el paquete compartido.
+
+## Ajuste de integración visual — 2026-10-20
+
+- Mantener la distribución del generador y del dashboard; corregir la integración con
+  el shell mediante un único contenedor de contenido y los tokens del paquete corporativo.
+- Aplicar las variables Geist/Geist Mono en `html` y la familia sans en `body`, de modo
+  que shell, portales y contenido hereden las fuentes. Mantener la tipografía actual del PDF.
+- Ocultar el espacio visual del panel de borradores cuando no tiene mensajes, conservando
+  su marcador de cambios pendientes para la protección de salida.
+- Capturas y comprobaciones Chromium con Supabase simulado constituyen validación local;
+  la revisión autenticada en producción queda pendiente del despliegue del ajuste.

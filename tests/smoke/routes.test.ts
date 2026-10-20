@@ -6,6 +6,7 @@ import { createRequire } from "node:module"
 import { generateKeyPairSync } from "node:crypto"
 import { signHubSsoTokenV2 } from "@gestionatools-org/hub-sso-core"
 import { APP_SESSION_COOKIE, createLocalSessionCookie } from "../../src/lib/hub-sso/session"
+import { checkVisualIntegration } from "./visual-integration"
 
 async function listen(server: Server) {
   await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve))
@@ -115,6 +116,8 @@ test("production routes preserve SSO and enforce local roles with mocked Supabas
         page.on("pageerror", error => errors.push(error.message))
         page.on("dialog", dialog => dialog.accept())
         await page.goto(base)
+        await page.getByRole("button", { name: /Instrucción de prueba/ }).click()
+        await checkVisualIntegration(page, "generator")
         await page.getByLabel("Entidad", { exact: true }).fill("Entidad de prueba")
         await page.getByLabel("Gestor/a", { exact: true }).fill("Gestora de prueba")
         await page.getByRole("button", { name: "Añadir todos", exact: true }).click()
@@ -129,6 +132,7 @@ test("production routes preserve SSO and enforce local roles with mocked Supabas
         await page.getByRole("button", { name: /Instrucción de prueba/ }).click()
         assert.equal(await page.getByPlaceholder("Observaciones").inputValue(), "Observación recuperable")
         assert.match(await page.getByRole("combobox").innerText(), /Año completo/)
+        await checkVisualIntegration(page, "generator", false)
         const downloadPromise = page.waitForEvent("download")
         await page.getByRole("button", { name: "Exportar PDF", exact: true }).click()
         const download = await downloadPromise
@@ -153,6 +157,8 @@ test("production routes preserve SSO and enforce local roles with mocked Supabas
         await context.addCookies([{ name: APP_SESSION_COOKIE, value: cookie, url: base, httpOnly: true }])
         role = "admin"
         await page.goto(base + "/admin/dashboard")
+        await page.getByRole("button", { name: "Editar", exact: true }).waitFor()
+        await checkVisualIntegration(page, "admin")
         await page.locator('input[name="title"]').fill("Edición pendiente")
         await page.waitForFunction(() => Object.keys(localStorage).some(key => key.includes("catalog-item") && localStorage.getItem(key)?.includes("Edición pendiente")))
         await page.reload()
