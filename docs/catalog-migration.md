@@ -8,5 +8,7 @@ Las relaciones internas usan UUID para mantener el modelo relacional de Supabase
 Las traducciones se conservan en columnas JSONB y la interfaz actual continúa
 mostrando español.
 
-RLS queda habilitado en la migración base, pero las policies se añadirán cuando
-esté definido cómo el SSO del hub establece la identidad JWT que recibe Supabase.
+El traslado posterior a `iobjetivos` mantiene tablas, UUID y datos. La migración
+`20261020000000_move_catalog_to_iobjetivos.sql` mantiene RLS y restringe acceso a servidor.
+Las altas locales son manuales en `iobjetivos.app_users`. Seguir `docs/schema-rollout.md`;
+no repetir el seed sobre una instalación existente.

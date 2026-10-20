@@ -2,18 +2,18 @@
 
 ## 1. Project Overview
 Aplicación web para la gestión y generación de informes estandarizados en formato PDF.
-El sistema permite a los **Administradores** configurar un catálogo de ítems jerarquizados (Comisiones, Instrucciones, Materias, etc.) y permite a **Usuarios Anónimos** generar archivos PDF seleccionando estos ítems e introduciendo metadatos de gestión (Entidad, Gestor, Plazo).
+El sistema permite a los **Administradores** configurar un catálogo de ítems jerarquizados (Comisiones, Instrucciones, Materias, etc.) y permite a **Usuarios con sesión Hub y alta local** generar archivos PDF seleccionando estos ítems e introduciendo metadatos de gestión (Entidad, Gestor, Plazo).
 
 ## 2. User Roles
 
 ### A. Administrador (Auth Required)
-- **Acceso:** SSO central del Hub GestionaTools con token HMAC verificado server-side y sesión local mínima.
+- **Acceso:** SSO central del Hub GestionaTools con token Hub SSO v2 Ed25519 verificado en servidor y sesión local firmada de 8 horas.
 - **Permisos:**
   - Crear, Leer, Actualizar y Borrar (CRUD) los Ítems de Configuración.
   - Gestionar la jerarquía de datos.
 
-### B. Usuario General (Public/Anonymous)
-- **Acceso:** Sin autenticación (Ruta pública).
+### B. Usuario General (rol local user)
+- **Acceso:** Mediante Hub SSO y alta manual en `iobjetivos.app_users`.
 - **Permisos:**
   - Visualizar (Leer) los ítems configurados.
   - Filtrar ítems por jerarquía.
@@ -28,7 +28,7 @@ El sistema permite a los **Administradores** configurar un catálogo de ítems j
   - Campos: Comisión, Instrucción, Materia, Submateria, Línea de Trabajo, Objetivo, Estado, Año, Código heredado.
   - Validaciones: Zod (campos requeridos).
 
-### 3.2. Generador Público de Informes
+### 3.2. Generador de Informes (Hub SSO)
 - **Entrada de Datos de Cabecera:**
   - Entidad (Texto).
   - Gestor (Texto).
@@ -47,6 +47,12 @@ El sistema permite a los **Administradores** configurar un catálogo de ítems j
   - El PDF mantiene la agrupacion por instruccion e incluye observaciones y plazo.
 
 ## 4. Database Schema (Supabase)
+
+Catálogo en esquema `iobjetivos`, conservando nombres de tablas y vista existentes.
+`iobjetivos.app_users (hub_user_id PK/FK public.usuarios_gtools.id, role user|admin, created_at)`
+se provisiona manualmente. La identidad SSO `sub` referencia al usuario del Hub, no a Auth.
+El rol global no determina el local. Ambos roles generan informes; admin conserva el CRUD
+actual. Las nuevas funciones administrativas quedan para una fase posterior.
 
 ### Tablas normalizadas
 
@@ -73,22 +79,36 @@ Relaciones:
 Notas:
 - El plazo no se almacena en la tabla; se selecciona al exportar.
 
-**Row Level Security (RLS) Policies:**
-1. **Enable RLS.**
-2. **Policy Authenticated/SSO Read:** `SELECT` para usuarios autenticados por el flujo SSO cuando quede definido el puente de identidad con Supabase.
-3. **Policy Admin Full:** `ALL` para usuarios administradores, previsiblemente mediante `users.admin = true`.
+**Seguridad y acceso a datos:**
+1. RLS habilitado en las seis tablas y en `app_users`; vista con `security_invoker`.
+2. Sin acceso directo `anon`/`authenticated`: sustituye la lectura pública inicial por decisión del usuario del 2026-10-20.
+3. Supabase en servidor con service role, previa comprobación de cookie, estado Hub, alta y rol local.
+4. Server Actions para lecturas y CRUD; escrituras exclusivamente admin local, con validación de año 2026.
+5. Las operaciones comprueban que la cuenta coincide con la que abrió la pestaña.
 
 ## 5. Site Map & Routing
 
-- `src/app/page.tsx` -> **Vista Pública.** Formulario de entrada (Entidad/Gestor) + Selección de Ítems + Botón "Exportar PDF".
+- `src/app/(protected)/page.tsx` -> **Vista protegida mediante Hub y alta local.** Formulario de entrada (Entidad/Gestor) + Selección de Ítems + Botón "Exportar PDF".
 - `src/app/sso/route.ts` -> Entrada SSO desde el Hub (`GET /sso?token=...`).
-- `src/app/logout/route.ts` -> Logout local de esta app.
+- `src/app/logout/route.ts` -> Logout local de esta app, con redirección 303 a `HUB_BASE_URL`.
 - `src/app/login/page.tsx` -> Compatibilidad: redirige al dashboard protegido.
-- `src/app/admin/dashboard/page.tsx` -> **Vista Privada.** CRUD de `informeobjetivos_items_objetivo`.
+- `src/app/(protected)/admin/dashboard/page.tsx` -> **Vista Privada.** CRUD de `informeobjetivos_items_objetivo`.
 
 ## 6. UI/UX Guidelines (shadcn/ui)
 
 - **Input:** Formularios limpios usando `react-hook-form` + `zod`.
 - **Feedback:** `Toaster` para confirmar guardado de ítems o generación de PDF.
-- **Data Display:** `Table` component para el Admin Dashboard. `Card` o `Checkbox` list para la selección pública.
+- **Data Display:** `Table` component para el Admin Dashboard. `Card` o `Checkbox` list para la selección de ítems.
 - **Icons:** Lucide React para acciones (Download, Edit, Trash, Plus).
+
+## 7. Sesión y recuperación del trabajo
+
+- Mantener el contrato SSO v2, issuer/audience/app_id y la ruta de entrada.
+- Cookie local de 8 horas absolutas, independiente del TTL del token Hub, sin renovación por actividad.
+- Logout visible al Hub; sin cerrar la sesión global del Hub.
+- Borradores locales de informe y CRUD separados por usuario/pestaña, TTL de 24 horas,
+  guardado automático tras 500 ms y recuperación explícita sin guardar en servidor.
+- Mantener importación/exportación JSON versión 1 y PDF íntegramente cliente.
+- Comprobar sesión cada 30 segundos y al recuperar foco; aviso cinco minutos antes de caducar,
+  conservando el formulario y ofreciendo reautenticación.
+- UI corporativa mediante `@gestionatools-org/ui` y stack Next 16/React 19/Tailwind 4.

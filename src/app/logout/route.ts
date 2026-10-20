@@ -4,14 +4,13 @@ import { APP_SESSION_COOKIE } from "@/lib/hub-sso/session"
 const clearSession = (request: Request) => {
   const url = new URL(request.url)
   const hubBaseUrl = process.env.HUB_BASE_URL
-  const hubAppId = process.env.HUB_APP_ID
-  const redirectUrl =
-    hubBaseUrl && hubAppId
-      ? `${hubBaseUrl}/sso?app=${encodeURIComponent(hubAppId)}`
-      : new URL("/", url)
-
-  const response = NextResponse.redirect(redirectUrl)
-  response.cookies.delete(APP_SESSION_COOKIE)
+  if (!hubBaseUrl) return new NextResponse("Missing HUB_BASE_URL", { status: 500 })
+  const response = NextResponse.redirect(new URL(hubBaseUrl, url), 303)
+  response.cookies.set(APP_SESSION_COOKIE, "", {
+    httpOnly: true, secure: process.env.NODE_ENV === "production",
+    sameSite: "lax", path: "/", maxAge: 0,
+  })
+  response.headers.set("Cache-Control", "no-store")
   return response
 }
 

@@ -1,12 +1,26 @@
-# Assumptions
+# Decisiones y supuestos
 
-- PDF export keeps grouped items per instruction and includes metadata, observaciones y plazo.
-- Plazo is selected per item at export time (not stored in Supabase).
-- Supabase uses normalized tables (`informeobjetivos_commissions`, `informeobjetivos_instructions`, `informeobjetivos_matters`, `informeobjetivos_submatters`, `informeobjetivos_work_lines`, `informeobjetivos_items_objetivo`) and a read view `informeobjetivos_v_items_export` for UI/PDF.
-- `informeobjetivos_items_objetivo.id` is a UUID primary key generated with `gen_random_uuid()` via `pgcrypto`.
-- SSO handoff uses Hub SSO v2 tokens verified with Ed25519 public-key verification via `@gestionatools-org/hub-sso-core`.
-- The migrated catalog keeps deprecated local-app IDs in `legacy_id`; new admin-created rows receive generated technical `legacy_id` values.
-- RLS policies are deferred until the SSO-to-Supabase identity bridge is defined; the new catalog migration enables RLS and leaves tables deny-by-default.
-- CRUD authorization is expected to use an admin flag such as `users.admin = true`, but the exact Supabase policy shape remains open.
-- `@gestionatools-org/hub-sso-core` is installed from GitHub Packages; Vercel/CI needs `GITHUB_TOKEN` with `read:packages`.
-- `HUB_SSO_PUBLIC_KEY` verifies Hub-issued SSO v2 tokens; `APP_SESSION_SECRET` signs this app's local `hub_app_session` cookie.
+## Decisiones acordadas — 2026-10-20
+
+- Acceso exclusivamente mediante Hub, sustituyendo el generador público del PRD original.
+- Catálogo y `public.usuarios_gtools` están en el mismo proyecto Supabase.
+- Mover las seis tablas y la vista `informeobjetivos_*` a `iobjetivos`, conservando nombres y datos.
+- `iobjetivos.app_users` referencia `usuarios_gtools.id` (claim `sub`) y tiene roles `user/admin`.
+- Todas las altas y cambios de rol locales son manuales; no heredar `global_role`.
+- `user` genera/exporta; `admin` conserva además el CRUD. Nuevas funciones admin quedan fuera de esta fase.
+- Sesión local absoluta de 8 horas, independiente del token de intercambio SSO, sin renovación por actividad.
+- Logout local a `HUB_BASE_URL`, manteniendo la sesión del Hub.
+- Recuperación explícita de borradores en el navegador, sin persistir informes en base de datos.
+- SQL remoto y despliegue por etapas, con aprobación explícita.
+
+## Defaults de implementación
+
+- Conservar `hub_app_session` y aceptar cookies antiguas hasta su vencimiento original.
+- Consultar estado Hub y rol local en cada operación. Denegar si no hay alta o `status != activo`.
+- Supabase exclusivamente en servidor con service role y autorización previa; la cookie Hub no es un JWT Supabase.
+- Borradores por usuario/instancia de pestaña, TTL de 24 horas desde última edición, guardado tras 500 ms y al abandonar.
+- Conservar borradores al cerrar sesión, con confirmación. Otra cuenta no accede a ellos.
+- Comprobar sesión cada 30 segundos y al recuperar foco; avisar cinco minutos antes de caducar.
+- Conservar JSON manual versión 1 y snapshots de ítems; no sustituir silenciosamente textos por cambios del catálogo.
+- PDF completamente cliente, agrupación/orden y plazos por ítem conservados. Año fijo 2026.
+- Identidad visual mediante `@gestionatools-org/ui@0.1.0`, sin modificar el paquete compartido.

@@ -22,10 +22,10 @@ const redirectToHub = () => {
   return response
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  if (publicPathPrefixes.some((prefix) => pathname.startsWith(prefix))) {
+  if (publicPathPrefixes.some((prefix) => pathname === prefix)) {
     return NextResponse.next()
   }
 
@@ -35,6 +35,7 @@ export async function middleware(request: NextRequest) {
   )
 
   if (!session) {
+    if (pathname.startsWith("/api/")) return NextResponse.json({ error: "session_expired" }, { status: 401, headers: { "Cache-Control": "no-store" } })
     return redirectToHub()
   }
 
@@ -43,6 +44,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|Gestiona-RGB.png|robots.txt).*)",
+    "/((?!_next/static|_next/image|favicon.ico|Gestiona-RGB.png|isotipo-gestiona-avanza.png|robots.txt).*)",
   ],
 }

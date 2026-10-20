@@ -6,10 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "test:smoke": "tsx --test tests/smoke/*.test.ts",
+    "test:browser": "IOBJETIVOS_BROWSER_TESTS=1 tsx --test tests/smoke/*.test.ts"
   },
   "dependencies": {
     "@gestionatools-org/hub-sso-core": "0.1.0",
+    "@gestionatools-org/ui": "0.1.0",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-checkbox": "^1.3.3",
@@ -22,7 +27,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.562.0",
-    "next": "16.1.1",
+    "next": "16.4.1",
     "next-themes": "^0.4.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -32,14 +37,24 @@
     "zod": "^4.3.5"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.3.14",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.1.1",
+    "eslint-config-next": "16.4.1",
+    "playwright": "^1.64.1",
     "tailwindcss": "^4",
+    "tsx": "^4.20.6",
     "tw-animate-css": "^1.4.0",
     "typescript": "^5"
+  },
+  "packageManager": "pnpm@10.18.3",
+  "pnpm": {
+    "overrides": {
+      "postcss>nanoid": "3.3.18",
+      "postcss>source-map-js": "1.2.2"
+    }
   }
 }

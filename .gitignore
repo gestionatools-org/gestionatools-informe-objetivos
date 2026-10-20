@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local catalog backup for the manual rollout
+/iobjetivos-antes-migracion.json

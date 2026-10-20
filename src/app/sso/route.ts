@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import {
   APP_SESSION_COOKIE,
   createLocalSessionCookie,
+  sessionFromClaims,
 } from "@/lib/hub-sso/session"
 import { verifyIncomingHubSsoToken } from "@/lib/hub-sso/verify-incoming-token"
 
@@ -30,17 +31,10 @@ export async function GET(request: Request) {
   try {
     const { appSessionSecret } = requiredEnv()
     const claims = verifyIncomingHubSsoToken(token)
-    const session = {
-      sub: claims.sub,
-      email: claims.email,
-      name: claims.name ?? null,
-      global_role: claims.global_role ?? null,
-      app_id: claims.app_id,
-      exp: claims.exp,
-    }
+    const session = sessionFromClaims(claims)
     const cookieValue = await createLocalSessionCookie(session, appSessionSecret)
     const nowSeconds = Math.floor(Date.now() / 1000)
-    const maxAge = Math.max(claims.exp - nowSeconds, 0)
+    const maxAge = Math.max(session.exp - nowSeconds, 0)
     const response = NextResponse.redirect(new URL("/", url))
 
     response.cookies.set({
@@ -52,6 +46,8 @@ export async function GET(request: Request) {
       path: "/",
       maxAge,
     })
+    response.headers.set("Cache-Control", "no-store")
+    response.headers.set("Referrer-Policy", "no-referrer")
 
     return response
   } catch {

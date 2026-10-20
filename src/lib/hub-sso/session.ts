@@ -1,6 +1,7 @@
 import type { HubSsoTokenClaimsV2 } from "@gestionatools-org/hub-sso-core"
 
 export const APP_SESSION_COOKIE = "hub_app_session"
+export const LOCAL_SESSION_SECONDS = 8 * 60 * 60
 
 export type LocalSession = Pick<
   HubSsoTokenClaimsV2,
@@ -9,6 +10,18 @@ export type LocalSession = Pick<
   name: string | null
   global_role: "admin" | "user" | null
   exp: number
+  sessionVersion?: 2
+  authenticatedAt?: number
+  ssoExpiresAt?: number
+}
+
+export function sessionFromClaims(claims: HubSsoTokenClaimsV2, now = Math.floor(Date.now() / 1000)): LocalSession {
+  return {
+    sub: claims.sub, email: claims.email, name: claims.name ?? null,
+    global_role: claims.global_role ?? null, app_id: claims.app_id,
+    exp: now + LOCAL_SESSION_SECONDS, sessionVersion: 2,
+    authenticatedAt: now, ssoExpiresAt: claims.exp,
+  }
 }
 
 const encoder = new TextEncoder()
@@ -95,11 +108,24 @@ export const verifyLocalSessionCookie = async (
     return null
   }
 
-  const session = parseJsonPart<LocalSession>(payloadPart)
-  const nowSeconds = Math.floor(Date.now() / 1000)
-  if (typeof session.exp !== "number" || session.exp <= nowSeconds) {
+  try {
+    const session = parseJsonPart<LocalSession>(payloadPart)
+    const nowSeconds = Math.floor(Date.now() / 1000)
+    if (!session || typeof session.exp !== "number" || !Number.isFinite(session.exp) || session.exp <= nowSeconds
+      || typeof session.sub !== "string" || !session.sub || typeof session.email !== "string"
+      || typeof session.app_id !== "string" || !process.env.HUB_APP_ID || session.app_id !== process.env.HUB_APP_ID
+      || (session.name !== null && typeof session.name !== "string")
+      || ![null, "admin", "user"].includes(session.global_role)) {
+      return null
+    }
+    if (session.sessionVersion !== undefined && session.sessionVersion !== 2) return null
+    if (session.sessionVersion === 2 && (
+      !Number.isFinite(session.authenticatedAt) || !Number.isFinite(session.ssoExpiresAt)
+      || session.authenticatedAt! > nowSeconds || session.ssoExpiresAt! <= session.authenticatedAt!
+      || session.exp !== session.authenticatedAt! + LOCAL_SESSION_SECONDS
+    )) return null
+    return session
+  } catch {
     return null
   }
-
-  return session
 }

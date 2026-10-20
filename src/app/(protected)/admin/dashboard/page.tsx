@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useState } from "react"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
+import { LocalDraft } from "@/components/local-draft"
+import { adminDraftSchema } from "@/lib/drafts"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -50,7 +52,7 @@ const formSchema = z.object({
   legacy_item_code: z.string().optional(),
   title: z.string().min(1, "Objetivo requerido"),
   status: z.string().optional(),
-  year: z.number().int().min(2000, "Año requerido"),
+  year: z.literal(2026),
 })
 
 const defaultValues: z.infer<typeof formSchema> = {
@@ -99,18 +101,18 @@ export default function AdminDashboardPage() {
   })
 
   const isEditing = Boolean(editingId)
-  const selectedCommissionId = form.watch("commission_id")
-  const selectedInstructionId = form.watch("instruction_id")
-  const selectedMatterId = form.watch("matter_id")
-  const selectedSubmatterId = form.watch("submatter_id")
-  const selectedWorkLineId = form.watch("work_line_id")
+  const selectedCommissionId = useWatch({ control: form.control, name: "commission_id" })
+  const selectedInstructionId = useWatch({ control: form.control, name: "instruction_id" })
+  const selectedMatterId = useWatch({ control: form.control, name: "matter_id" })
+  const selectedSubmatterId = useWatch({ control: form.control, name: "submatter_id" })
+  const selectedWorkLineId = useWatch({ control: form.control, name: "work_line_id" })
 
   const loadItems = async () => {
     setLoading(true)
     try {
       const data = await fetchItemsExport()
       setItems(data)
-    } catch (error) {
+    } catch {
       toast.error("No se pudieron cargar los items.")
     } finally {
       setLoading(false)
@@ -125,7 +127,7 @@ export default function AdminDashboardPage() {
       ])
       setCommissions(commissionData)
       setWorkLines(workLineData)
-    } catch (error) {
+    } catch {
       toast.error("No se pudieron cargar las dimensiones.")
     }
   }
@@ -138,7 +140,7 @@ export default function AdminDashboardPage() {
         if (!active) return
         await loadItems()
         await loadDimensions()
-      } catch (error) {
+      } catch {
         toast.error("No se pudo cargar el dashboard.")
       }
     }
@@ -151,10 +153,7 @@ export default function AdminDashboardPage() {
   }, [])
 
   useEffect(() => {
-    if (!selectedCommissionId) {
-      setInstructions([])
-      return
-    }
+    if (!selectedCommissionId) return
 
     let active = true
     fetchInstructionsByCommission(selectedCommissionId)
@@ -173,10 +172,7 @@ export default function AdminDashboardPage() {
   }, [selectedCommissionId])
 
   useEffect(() => {
-    if (!selectedInstructionId) {
-      setMatters([])
-      return
-    }
+    if (!selectedInstructionId) return
 
     let active = true
     fetchMattersByInstruction(selectedInstructionId)
@@ -195,10 +191,7 @@ export default function AdminDashboardPage() {
   }, [selectedInstructionId])
 
   useEffect(() => {
-    if (!selectedMatterId) {
-      setSubmatters([])
-      return
-    }
+    if (!selectedMatterId) return
 
     let active = true
     fetchSubmattersByMatter(selectedMatterId)
@@ -216,11 +209,8 @@ export default function AdminDashboardPage() {
     }
   }, [selectedMatterId])
 
-  const handleLogout = async () => {
-    window.location.href = "/logout"
-  }
-
   const handleEdit = (item: ItemsExportRecord) => {
+    if (form.formState.isDirty && !confirm("¿Descartar la edición actual y abrir otro ítem?")) return
     setEditingId(item.item_uuid)
     const hydrate = async () => {
       try {
@@ -253,9 +243,9 @@ export default function AdminDashboardPage() {
           legacy_item_code: record.legacy_item_code ?? "",
           title: record.title,
           status: record.status ?? "",
-          year: record.year ?? 2026,
+          year: 2026,
         })
-      } catch (error) {
+      } catch {
         toast.error("No se pudo cargar el item.")
       }
     }
@@ -269,12 +259,13 @@ export default function AdminDashboardPage() {
       await deleteItemObjetivo(id)
       setItems((prev) => prev.filter((item) => item.item_uuid !== id))
       toast.success("Item eliminado.")
-    } catch (error) {
+    } catch {
       toast.error("No se pudo eliminar el item.")
     }
   }
 
-  const handleNew = () => {
+  const handleNew = (skipConfirmation = false) => {
+    if (!skipConfirmation && form.formState.isDirty && !confirm("¿Descartar la edición actual?")) return
     setEditingId(null)
     form.reset(defaultValues)
     setInstructions([])
@@ -294,13 +285,20 @@ export default function AdminDashboardPage() {
         toast.success("Item creado.")
       }
       await loadItems()
-      handleNew()
-    } catch (error) {
+      handleNew(true)
+    } catch {
       toast.error("No se pudo guardar el item.")
     } finally {
       setSaving(false)
     }
   })
+
+  const draftValues = useWatch({ control: form.control })
+  const adminDraft = {
+    editingId,
+    values: { ...defaultValues, ...draftValues, year: 2026 as const,
+      legacy_item_code: draftValues.legacy_item_code ?? "", status: draftValues.status ?? "" },
+  }
 
   const sortedItems = useMemo(() => {
     return [...items].sort((a, b) =>
@@ -309,26 +307,30 @@ export default function AdminDashboardPage() {
   }, [items])
 
   return (
-    <div className="min-h-screen bg-zinc-50 px-6 py-12">
+    <div className="min-h-screen bg-background px-6 py-12">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <Badge className="mb-2">Admin</Badge>
             <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-            <p className="text-sm text-zinc-600">
+            <p className="text-sm text-muted-foreground">
               Gestiona el catalogo de configuracion.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="outline" onClick={handleNew}>
+            <Button type="button" variant="outline" onClick={() => handleNew()}>
               Nuevo item
-            </Button>
-            <Button type="button" onClick={handleLogout}>
-              Salir
             </Button>
           </div>
         </header>
 
+        <LocalDraft kind="catalog-item" schema={adminDraftSchema} value={adminDraft}
+          dirty={form.formState.isDirty}
+          onRestore={(draft) => {
+            setEditingId(draft.editingId)
+            form.reset(draft.values, { keepDefaultValues: true })
+            toast.success("Edición recuperada. Revisa los datos antes de guardar.")
+          }} />
         <Card>
           <CardHeader>
             <CardTitle>{isEditing ? "Editar item" : "Nuevo item"}</CardTitle>
@@ -343,7 +345,10 @@ export default function AdminDashboardPage() {
                 <Select
                   value={selectedCommissionId}
                   onValueChange={(value) => {
-                    form.setValue("commission_id", value)
+                    setInstructions([])
+                    setMatters([])
+                    setSubmatters([])
+                    form.setValue("commission_id", value, { shouldDirty: true })
                     form.setValue("instruction_id", "")
                     form.setValue("matter_id", "")
                     form.setValue("submatter_id", "")
@@ -366,7 +371,9 @@ export default function AdminDashboardPage() {
                 <Select
                   value={selectedInstructionId}
                   onValueChange={(value) => {
-                    form.setValue("instruction_id", value)
+                    setMatters([])
+                    setSubmatters([])
+                    form.setValue("instruction_id", value, { shouldDirty: true })
                     form.setValue("matter_id", "")
                     form.setValue("submatter_id", "")
                   }}
@@ -389,7 +396,7 @@ export default function AdminDashboardPage() {
                 <Select
                   value={selectedMatterId}
                   onValueChange={(value) => {
-                    form.setValue("matter_id", value)
+                    form.setValue("matter_id", value, { shouldDirty: true })
                     form.setValue("submatter_id", "")
                   }}
                   disabled={!selectedInstructionId}
@@ -410,7 +417,7 @@ export default function AdminDashboardPage() {
                 <Label>Submateria</Label>
                 <Select
                   value={selectedSubmatterId}
-                  onValueChange={(value) => form.setValue("submatter_id", value)}
+                  onValueChange={(value) => form.setValue("submatter_id", value, { shouldDirty: true })}
                   disabled={!selectedMatterId}
                 >
                   <SelectTrigger>
@@ -429,7 +436,7 @@ export default function AdminDashboardPage() {
                 <Label>Linea de trabajo</Label>
                 <Select
                   value={selectedWorkLineId}
-                  onValueChange={(value) => form.setValue("work_line_id", value)}
+                  onValueChange={(value) => form.setValue("work_line_id", value, { shouldDirty: true })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona" />
@@ -459,6 +466,7 @@ export default function AdminDashboardPage() {
                 <Label>Año</Label>
                 <Input
                   type="number"
+                  readOnly
                   {...form.register("year", { valueAsNumber: true })}
                 />
               </div>
@@ -467,7 +475,7 @@ export default function AdminDashboardPage() {
                   {saving ? "Guardando..." : isEditing ? "Actualizar" : "Guardar"}
                 </Button>
                 {isEditing && (
-                  <Button type="button" variant="ghost" onClick={handleNew}>
+                  <Button type="button" variant="ghost" onClick={() => handleNew()}>
                     Cancelar
                   </Button>
                 )}
@@ -485,12 +493,12 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="rounded-md border border-dashed border-zinc-300 px-4 py-8 text-center text-sm text-zinc-500">
+              <div className="rounded-md border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
                 Cargando items...
               </div>
             ) : (
-              <div className="rounded-lg border border-zinc-200/80">
-                <div className="grid grid-cols-[1.4fr_1fr_1.6fr_0.7fr_auto] gap-3 border-b border-zinc-200/80 bg-zinc-50 px-3 py-2 text-xs font-semibold text-zinc-500">
+              <div className="rounded-lg border border-border">
+                <div className="grid grid-cols-[1.4fr_1fr_1.6fr_0.7fr_auto] gap-3 border-b border-border bg-background px-3 py-2 text-xs font-semibold text-muted-foreground">
                   <span>Instruccion</span>
                   <span>Linea</span>
                   <span>Objetivo</span>
@@ -500,18 +508,18 @@ export default function AdminDashboardPage() {
                 {sortedItems.map((item) => (
                   <div
                     key={item.item_uuid}
-                    className="grid grid-cols-[1.4fr_1fr_1.6fr_0.7fr_auto] items-center gap-3 border-b border-zinc-100 px-3 py-2 text-sm last:border-b-0"
+                    className="grid grid-cols-[1.4fr_1fr_1.6fr_0.7fr_auto] items-center gap-3 border-b border-border px-3 py-2 text-sm last:border-b-0"
                   >
-                    <div className="text-xs text-zinc-700">
+                    <div className="text-xs text-foreground">
                       {item.instruction ?? "Sin instruccion"}
                     </div>
-                    <div className="text-xs text-zinc-600">
+                    <div className="text-xs text-muted-foreground">
                       {item.work_line ?? "Sin linea"}
                     </div>
-                    <div className="text-xs text-zinc-600">
+                    <div className="text-xs text-muted-foreground">
                       {item.title ?? "Sin objetivo"}
                     </div>
-                    <div className="text-xs text-zinc-500">
+                    <div className="text-xs text-muted-foreground">
                       {item.item_code ?? "Sin ID"}
                     </div>
                     <div className="flex gap-2">
@@ -535,7 +543,7 @@ export default function AdminDashboardPage() {
                   </div>
                 ))}
                 {!loading && sortedItems.length === 0 && (
-                  <div className="px-4 py-6 text-sm text-zinc-500">
+                  <div className="px-4 py-6 text-sm text-muted-foreground">
                     No hay items cargados.
                   </div>
                 )}
