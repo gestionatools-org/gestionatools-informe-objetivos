@@ -9,7 +9,7 @@
 - Todas las altas y cambios de rol locales son manuales; no heredar `global_role`.
 - `user` genera/exporta; `admin` conserva además el CRUD. Nuevas funciones admin quedan fuera de esta fase.
 - Sesión local absoluta de 8 horas, independiente del token de intercambio SSO, sin renovación por actividad.
-- Logout local a `HUB_BASE_URL`, manteniendo la sesión del Hub.
+- Logout local a `https://gestionatools.com/catalogo` por petición del 2026-11-10, manteniendo la sesión del Hub.
 - Recuperación explícita de borradores en el navegador, sin persistir informes en base de datos.
 - SQL remoto y despliegue por etapas, con aprobación explícita.
 

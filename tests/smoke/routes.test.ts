@@ -102,7 +102,7 @@ test("production routes preserve SSO and enforce local roles with mocked Supabas
     assert.match(invalidSso.headers.get("set-cookie") || "", /hub_app_session=;/)
     const loggedOut = await request("/logout", cookie, "POST")
     assert.equal(loggedOut.status, 303)
-    assert.equal(loggedOut.headers.get("location"), "https://hub.example.test/")
+    assert.equal(loggedOut.headers.get("location"), "https://gestionatools.com/catalogo")
     assert.match(loggedOut.headers.get("set-cookie") || "", /Max-Age=0/)
     assert.equal((await request("/isotipo-gestiona-avanza.png")).status, 200)
     if (process.env.IOBJETIVOS_BROWSER_TESTS === "1") {

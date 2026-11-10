@@ -90,7 +90,7 @@ Notas:
 
 - `src/app/(protected)/page.tsx` -> **Vista protegida mediante Hub y alta local.** Formulario de entrada (Entidad/Gestor) + Selección de Ítems + Botón "Exportar PDF".
 - `src/app/sso/route.ts` -> Entrada SSO desde el Hub (`GET /sso?token=...`).
-- `src/app/logout/route.ts` -> Logout local de esta app, con redirección 303 a `HUB_BASE_URL`.
+- `src/app/logout/route.ts` -> Logout local de esta app, con redirección 303 a `https://gestionatools.com/catalogo`.
 - `src/app/login/page.tsx` -> Compatibilidad: redirige al dashboard protegido.
 - `src/app/(protected)/admin/dashboard/page.tsx` -> **Vista Privada.** CRUD de `informeobjetivos_items_objetivo`.
 

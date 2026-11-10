@@ -1,5 +1,12 @@
 # PROJECT_STATUS
 
+## Ajuste — 2026-11-10
+
+- Cierre de sesión local (GET/POST `/logout`) con redirección 303 a
+  `https://gestionatools.com/catalogo`. Conserva el borrado de la cookie local.
+- Validación local: tests, TypeScript, lint, build y smoke de rutas correctos.
+  Pendiente de comprobación en producción tras el despliegue.
+
 ## Estado — 2026-10-20
 
 Implementados localmente el traslado a `iobjetivos`, los roles propios vinculados al Hub,

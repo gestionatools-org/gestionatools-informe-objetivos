@@ -84,7 +84,7 @@ informes; `admin` además conserva el CRUD actual. El rol global no concede perm
 Se mantiene `/sso?token=...`, verificación Ed25519 del token v2, issuer, audience y `app_id`.
 La cookie local firmada `hub_app_session` dura 8 horas absolutas desde la entrada;
 no se renueva por actividad. Las cookies anteriores mantienen su vencimiento original.
-`/logout` borra solo esta sesión y devuelve a `HUB_BASE_URL`, sin iniciar otro intercambio SSO.
+`/logout` borra solo esta sesión y devuelve a `https://gestionatools.com/catalogo`, sin iniciar otro intercambio SSO.
 
 El generador y el formulario CRUD guardan borradores locales a los 500 ms y al salir.
 Se separan por usuario y por instancia de pestaña, caducan a las 24 horas y requieren

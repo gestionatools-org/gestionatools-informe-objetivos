@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
 import { APP_SESSION_COOKIE, LOCAL_SESSION_SECONDS, createLocalSessionCookie, sessionFromClaims, verifyLocalSessionCookie, type LocalSession } from "../src/lib/hub-sso/session"
-import { POST as logout } from "../src/app/logout/route"
+import { GET as logoutGet, POST as logout } from "../src/app/logout/route"
 
 process.env.APP_SESSION_SECRET = "test-only-session-secret"
 process.env.HUB_APP_ID = "test-app"
@@ -37,10 +37,12 @@ test("tampering, unknown app, malformed payload, expiry and invalid version fail
   assert.equal(await verifyLocalSessionCookie(await createLocalSessionCookie(null as unknown as LocalSession)), null)
 })
 
-test("logout clears the local cookie and redirects to HUB_BASE_URL without SSO re-entry", () => {
-  const response = logout(new Request("https://app.example.test/logout", { method: "POST" }))
-  assert.equal(response.status, 303)
-  assert.equal(response.headers.get("location"), process.env.HUB_BASE_URL)
-  assert.equal(response.cookies.get(APP_SESSION_COOKIE)?.value, "")
-  assert.match(response.headers.get("set-cookie") || "", /Max-Age=0/)
+test("GET and POST logout clear the local cookie and redirect to the GestionaTools catalog", () => {
+  for (const handler of [logoutGet, logout]) {
+    const response = handler()
+    assert.equal(response.status, 303)
+    assert.equal(response.headers.get("location"), "https://gestionatools.com/catalogo")
+    assert.equal(response.cookies.get(APP_SESSION_COOKIE)?.value, "")
+    assert.match(response.headers.get("set-cookie") || "", /Max-Age=0/)
+  }
 })
